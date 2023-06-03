@@ -56,20 +56,25 @@ void enqueue(const void* data) {
 
 void* dequeue(void)  {
     // Remove and return an item from the queue
+    return NULL;
 }
 
 bool tryDequeue(void** data) {
     // Try to remove and return an item from the queue, return true if successful
+    return true;
 }
 
 size_t size(void) {
     // Get the current size of the queue
+    return 0;
 }
 
-size_t size(void) {
+size_t waiting(void) {
     // Get the current number of waiting threads
+    return 0;
 }
 
 size_t visited(void) {
     // Get the number of items that have passed inside the queue
+    return 0;
 }
