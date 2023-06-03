@@ -1,3 +1,26 @@
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <threads.h>
+#include <stdatomic.h>
+
+typedef struct Node {
+    const void* data;
+    struct Node* next;
+} Node;
+
+typedef struct Queue {
+    Node* head;
+    Node* tail;
+    atomic_size_t itemCount;
+    atomic_size_t waitingCount;
+    atomic_size_t visitedCount;
+    mtx_t lock;
+    cnd_t itemAvailable;
+} Queue;
+
+Queue queue;
+
 void initQueue(void) {
     // Initialize the queue
 }
