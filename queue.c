@@ -66,15 +66,15 @@ bool tryDequeue(void** data) {
 
 size_t size(void) {
     // Get the current size of the queue
-    return 0;
+    return queue.itemCount;
 }
 
 size_t waiting(void) {
     // Get the current number of waiting threads
-    return 0;
+    return queue.waitingCount;
 }
 
 size_t visited(void) {
     // Get the number of items that have passed inside the queue
-    return 0;
+    return queue.visitedCount;
 }
