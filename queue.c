@@ -52,15 +52,79 @@ void destroyQueue(void) {
 
 void enqueue(const void* data) {
     // Add an item to the queue
+    mtx_lock(&queue.lock);
+
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    newNode->data = data;
+    newNode->next = NULL;
+
+    if (queue.tail == NULL) {
+        queue.head = newNode;
+        queue.tail = newNode;
+    } else {
+        queue.tail->next = newNode;
+        queue.tail = newNode;
+    }
+
+    queue.itemCount+=1;
+
+    if (queue.waitingCount > 0) {
+        cnd_signal(&queue.itemAvailable);
+    }
+
+    mtx_unlock(&queue.lock);
 }
 
 void* dequeue(void)  {
     // Remove and return an item from the queue
-    return NULL;
+    mtx_lock(&queue.lock);
+
+    while (queue.itemCount == 0) {
+        queue.waitingCount+=1;
+        cnd_wait(&queue.itemAvailable, &queue.lock);
+        queue.waitingCount-=1;
+    }
+
+    Node* node = queue.head;
+    queue.head = queue.head->next;
+    if (queue.head == NULL) {
+        queue.tail = NULL;
+    }
+
+    queue.itemCount-=1;
+    queue.visitedCount+=1;
+
+    mtx_unlock(&queue.lock);
+
+    void* data = (void*)node->data;
+    free(node);
+
+    return data;
 }
 
 bool tryDequeue(void** data) {
     // Try to remove and return an item from the queue, return true if successful
+    mtx_lock(&queue.lock);
+
+    if (queue.itemCount == 0) {
+        mtx_unlock(&queue.lock);
+        return false;
+    }
+
+    Node* node = queue.head;
+    queue.head = queue.head->next;
+    if (queue.head == NULL) {
+        queue.tail = NULL;
+    }
+
+    queue.itemCount-=1;
+    queue.visitedCount+=1;
+
+    mtx_unlock(&queue.lock);
+
+    *data = (void*)node->data;
+    free(node);
+
     return true;
 }
 

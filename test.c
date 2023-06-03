@@ -455,16 +455,16 @@ void test_mixed_operations()
 int main()
 {
     test_destroyQueue();
-    // test_enqueue_dequeue();
-    // test_tryDequeue();
-    // test_size();
-    // test_waiting();
-    // test_basic_concurrent_enqueue_dequeue();
-    // test_multiconcurrent_enqueue_dequeue();
-    // test_enqueue_tryDequeue();
-    // test_enqueue_dequeue_with_sleep();
-    // test_edge_cases();
-    // test_mixed_operations();
+    test_enqueue_dequeue();
+    test_tryDequeue();
+    test_size();
+    test_waiting();
+    test_basic_concurrent_enqueue_dequeue();
+    test_multiconcurrent_enqueue_dequeue();
+    test_enqueue_tryDequeue();
+    test_enqueue_dequeue_with_sleep();
+    test_edge_cases();
+    test_mixed_operations();
 
     return 0;
 }
