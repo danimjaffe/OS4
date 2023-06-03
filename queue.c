@@ -23,6 +23,13 @@ Queue queue;
 
 void initQueue(void) {
     // Initialize the queue
+    queue.head = NULL;
+    queue.tail = NULL;
+    queue.itemCount=0;
+    queue.waitingCount=0;
+    queue.visitedCount=0;
+    mtx_init(&queue.lock, mtx_plain);
+    cnd_init(&queue.itemAvailable);
 }
 
 void destroyQueue(void) {
