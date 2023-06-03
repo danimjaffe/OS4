@@ -34,6 +34,20 @@ void initQueue(void) {
 
 void destroyQueue(void) {
     // Destroy the queue and free resources
+    mtx_lock(&queue.lock);
+    while (queue.head != NULL) {
+        Node* temp = queue.head;
+        queue.head = queue.head->next;
+        free(temp);
+    }
+    queue.tail = NULL;
+    queue.itemCount= 0;
+    queue.waitingCount=0;
+    queue.visitedCount= 0;
+    mtx_unlock(&queue.lock);
+
+    mtx_destroy(&queue.lock);
+    cnd_destroy(&queue.itemAvailable);
 }
 
 void enqueue(const void* data) {
