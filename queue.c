@@ -1,26 +1,28 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <threads.h>
+#include <stdatomic.h>
 
 // Node structure for the queue
 typedef struct Node {
-    void* data;
-    struct Node* next;
+    void *data;
+    struct Node *next;
 } Node;
 
 // Thread structure
 typedef struct Thread {
     cnd_t cnd;
-    struct Thread* next;
+    struct Thread *next;
 } Thread;
 
 // Queue structure
 typedef struct {
-    Node* head;
-    Node* tail;
-    size_t itemCount;
-    size_t visitedCount;
-    Thread* waitingThreads;
+    Node *head;
+    Node *tail;
+    atomic_size_t itemCount;
+    atomic_size_t visitedCount;
+    atomic_size_t waitingCount;
+    Thread *waitingThreads;
     mtx_t lock;
 } Queue;
 
@@ -44,8 +46,8 @@ void destroyQueue(void) {
 }
 
 // Add an item to the queue
-void enqueue(void* data) {
-    Node* newNode = malloc(sizeof(Node));
+void enqueue(void *data) {
+    Node *newNode = malloc(sizeof(Node));
     newNode->data = data;
     newNode->next = NULL;
 
@@ -64,7 +66,7 @@ void enqueue(void* data) {
 
     // Wake up a waiting thread if there is one
     if (queue.waitingThreads != NULL) {
-        Thread* thread = queue.waitingThreads;
+        Thread *thread = queue.waitingThreads;
         queue.waitingThreads = thread->next;
         cnd_signal(&thread->cnd);
     }
@@ -73,7 +75,7 @@ void enqueue(void* data) {
 }
 
 // Remove an item from the queue (block if empty)
-void* dequeue(void) {
+void *dequeue(void) {
     mtx_lock(&queue.lock);
 
     while (queue.itemCount == 0) {
@@ -82,19 +84,22 @@ void* dequeue(void) {
         thread.next = queue.waitingThreads;
         queue.waitingThreads = &thread;
 
+        queue.waitingCount++;
+
         cnd_wait(&thread.cnd, &queue.lock);
 
+        queue.waitingCount--;
         cnd_destroy(&thread.cnd);
     }
 
-    Node* node = queue.head;
+    Node *node = queue.head;
     queue.head = node->next;
 
     if (queue.head == NULL) {
         queue.tail = NULL;
     }
 
-    void* data = node->data;
+    void *data = node->data;
     free(node);
 
     queue.itemCount--;
@@ -105,7 +110,7 @@ void* dequeue(void) {
 }
 
 // Try to remove an item from the queue (return false if empty)
-bool tryDequeue(void** data) {
+bool tryDequeue(void **data) {
     mtx_lock(&queue.lock);
 
     if (queue.itemCount == 0) {
@@ -113,7 +118,7 @@ bool tryDequeue(void** data) {
         return false;
     }
 
-    Node* node = queue.head;
+    Node *node = queue.head;
     queue.head = node->next;
 
     if (queue.head == NULL) {
@@ -137,19 +142,7 @@ size_t size(void) {
 
 // Return the current amount of threads waiting for the queue to fill
 size_t waiting(void) {
-    size_t count = 0;
-
-    mtx_lock(&queue.lock);
-
-    Thread* thread = queue.waitingThreads;
-    while (thread != NULL) {
-        count++;
-        thread = thread->next;
-    }
-
-    mtx_unlock(&queue.lock);
-
-    return count;
+    return queue.waitingCount;
 }
 
 // Return the amount of items that have passed inside the queue
